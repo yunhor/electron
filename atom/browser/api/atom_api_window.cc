@@ -172,7 +172,7 @@ void Window::WillDestroyNativeObject() {
 }
 
 void Window::OnWindowClosed() {
-  api_web_contents_->DestroyWebContents();
+  api_web_contents_->DestroyWebContents(true /* async */);
 
   RemoveFromWeakMap();
   window_->RemoveObserver(this);
