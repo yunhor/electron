@@ -83,6 +83,7 @@ describe('crashReporter module', function () {
 
         let server
         let dumpFile
+        let otherDumpFiles = new Set()
         let crashesDir
         const testDone = (uploaded) => {
           if (uploaded) {
@@ -93,7 +94,6 @@ describe('crashReporter module', function () {
             crashReporter.setUploadToServer(true)
           }
           assert(fs.existsSync(dumpFile))
-          fs.unlinkSync(dumpFile)
           done()
         }
 
@@ -103,7 +103,7 @@ describe('crashReporter module', function () {
             if (err) {
               return
             }
-            const dumps = files.filter((file) => /\.dmp$/.test(file))
+            const dumps = files.filter((file) => /\.dmp$/.test(file) && !otherDumpFiles.has(file))
             if (!dumps.length) {
               return
             }
@@ -111,8 +111,8 @@ describe('crashReporter module', function () {
             dumpFile = path.join(crashesDir, dumps[0])
             clearInterval(pollInterval)
             // dump file should not be deleted when not uploading, so we wait
-            // 500 ms and assert it still exists in `testDone`
-            setTimeout(testDone, 500)
+            // 1s and assert it still exists in `testDone`
+            setTimeout(testDone, 1000)
           })
         }
 
@@ -127,8 +127,8 @@ describe('crashReporter module', function () {
             }
           }
 
-          // Before starting, remove all dump files in the crash directory.
-          // This is required because:
+          // Before starting, make a list of all dump files in the crash
+          // directory. This is required because:
           // - mac crashpad not seem to allow changing the crash directory after
           //   the first "start" call.
           // - Other tests in this suite may leave dumps there.
@@ -138,7 +138,7 @@ describe('crashReporter module', function () {
             if (!err) {
               for (const file of files) {
                 if (/\.dmp$/.test(file)) {
-                  fs.unlinkSync(path.join(crashesDir, file))
+                  otherDumpFiles.add(file)
                 }
               }
             }
