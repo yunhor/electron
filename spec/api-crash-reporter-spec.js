@@ -117,14 +117,10 @@ describe('crashReporter module', function () {
         }
 
         remote.ipcMain.once('set-crash-directory', (event, dir) => {
-          if (process.platform === 'linux') {
-            crashesDir = dir
+          if (process.platform === 'darwin') {
+            crashesDir = path.join(crashReporter.getCrashesDirectory(), 'completed')
           } else {
-            crashesDir = crashReporter.getCrashesDirectory()
-            if (process.platform === 'darwin') {
-              // crashpad uses an extra subdirectory
-              crashesDir = path.join(crashesDir, 'completed')
-            }
+            crashesDir = dir
           }
 
           // Before starting, make a list of all dump files in the crash
@@ -142,6 +138,7 @@ describe('crashReporter module', function () {
                 }
               }
             }
+            console.log('existing files', crashesDir, files)
             event.returnValue = null  // allow the renderer to crash
             pollInterval = setInterval(pollDumpFile, 100)
           })
@@ -154,7 +151,7 @@ describe('crashReporter module', function () {
               pathname: path.join(fixtures, 'api', 'crash.html'),
               search: `?port=${port}&skipUpload=1`
             })
-            w.loadURL(crashUrl)
+            setTimeout(() => w.loadURL(crashUrl), 1000)
           },
           processType: 'renderer',
           done: testDone.bind(null, true)
